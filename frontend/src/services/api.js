@@ -1,7 +1,16 @@
+// ---------- Session / Credentials ----------
+
+import {
+  getGithubToken,
+  getLlmKey,
+} from "../utils/sessions.js";
+
 // ---------- Env-based base URL ----------
+
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
 // ---------- Endpoint registry ----------
+
 // NOTE: /api/issues (plural) — matching FastAPI router prefix
 const ENDPOINTS = {
   recommend: "/api/issues/recommend",
@@ -10,17 +19,33 @@ const ENDPOINTS = {
 };
 
 // ---------- Headers ----------
+
 function getHeaders() {
+  const githubToken = getGithubToken();
+  const llmKey = getLlmKey();
+
   return {
     "Content-Type": "application/json",
-    "X-Github-Token": localStorage.getItem("gh_token") || "",
-    "X-Groq-Api-Key": localStorage.getItem("llm_key") || "",
+
+    ...(githubToken
+      ? {
+          "X-Github-Token": githubToken,
+        }
+      : {}),
+
+    ...(llmKey
+      ? {
+          "X-Groq-Api-Key": llmKey,
+        }
+      : {}),
   };
 }
 
 // ---------- Generic request ----------
+
 async function request(path, body) {
   const url = `${API_BASE}${path}`;
+
   const res = await fetch(url, {
     method: "POST",
     headers: getHeaders(),
@@ -32,23 +57,29 @@ async function request(path, body) {
 
     try {
       const j = await res.json();
-      // Backend can return multiple error shapes:
-      //   HTTPException       → { detail: "..." }
-      //   Custom handlers     → { error: "...", message: "..." }
-      //   ValidationError     → { error, message, details: [...] }
-      //   Pydantic default    → { detail: [{...}] }
+
+      // HTTPException → { detail: "..." }
+      // Custom handlers → { error: "...", message: "..." }
+      // ValidationError → { error, message, details: [...] }
+      // Pydantic default → { detail: [{...}] }
+
       message =
         (typeof j.detail === "string" && j.detail) ||
         j.message ||
         j.error ||
         (Array.isArray(j.detail) &&
-          j.detail.map((d) => d.msg || d.message).filter(Boolean).join(", ")) ||
+          j.detail
+            .map((d) => d.msg || d.message)
+            .filter(Boolean)
+            .join(", ")) ||
         "";
     } catch {
-      /* non-JSON body */
+      // non-JSON body
     }
 
-    throw new Error(message || `Request failed (${res.status})`);
+    throw new Error(
+      message || `Request failed (${res.status})`
+    );
   }
 
   return res.json();
@@ -57,8 +88,13 @@ async function request(path, body) {
 // ---------- Public API ----------
 
 // STEP 1: Find matching issues
-// body: { skills: string[], experience: string, repo: string, limit: number }
-export function findIssues({ skills, experience, repo, limit = 10 }) {
+
+export function findIssues({
+  skills,
+  experience,
+  repo,
+  limit = 10,
+}) {
   return request(ENDPOINTS.recommend, {
     skills,
     experience,
@@ -68,8 +104,13 @@ export function findIssues({ skills, experience, repo, limit = 10 }) {
 }
 
 // STEP 2: Get issue breakdown
-// URL param: issueId | body: { repo, skills, experience }
-export function getIssueBreakdown({ issueId, repo, skills, experience }) {
+
+export function getIssueBreakdown({
+  issueId,
+  repo,
+  skills,
+  experience,
+}) {
   return request(ENDPOINTS.breakdown(issueId), {
     repo,
     skills,
@@ -78,8 +119,12 @@ export function getIssueBreakdown({ issueId, repo, skills, experience }) {
 }
 
 // STEP 3: Get hint for a specific level
-// body: { level, issue_context, current_progress }
-export function getHint({ level, issue_context, current_progress }) {
+
+export function getHint({
+  level,
+  issue_context,
+  current_progress,
+}) {
   return request(ENDPOINTS.hint, {
     level,
     issue_context,

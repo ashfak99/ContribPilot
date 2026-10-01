@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import {
   Eye,
   EyeOff,
@@ -8,20 +7,12 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const cardClass =
-  "rounded-2xl border border-white/10 bg-[#13161d] p-6 sm:p-8";
-
-const labelClass =
-  "block text-sm font-medium text-slate-300 mb-2";
-
-const inputClass =
-  "w-full px-4 py-3 pr-14 rounded-xl bg-[#0c0e13] border border-white/10 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/15 transition font-mono text-sm";
-
-const eyeBtnClass =
-  "absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 grid place-items-center rounded-lg bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 hover:text-white active:scale-95 transition z-10";
-
-const saveBtnClass =
-  "inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors active:scale-[0.98]";
+import {
+  saveGithubToken,
+  saveLlmKey,
+  getGithubToken,
+  getLlmKey,
+} from "../utils/sessions.js";
 
 export default function Config() {
   const [githubToken, setGithubToken] = useState("");
@@ -33,8 +24,21 @@ export default function Config() {
   const [savedGithub, setSavedGithub] = useState(false);
   const [savedLlm, setSavedLlm] = useState(false);
 
+  const [hasGithub, setHasGithub] = useState(
+    () => Boolean(getGithubToken())
+  );
+
+  const [hasLlm, setHasLlm] = useState(
+    () => Boolean(getLlmKey())
+  );
+
   const handleSaveGithub = () => {
     if (!githubToken.trim()) return;
+
+    saveGithubToken(githubToken.trim());
+
+    setGithubToken("");
+    setHasGithub(true);
 
     setSavedGithub(true);
 
@@ -46,6 +50,11 @@ export default function Config() {
   const handleSaveLlm = () => {
     if (!llmKey.trim()) return;
 
+    saveLlmKey(llmKey.trim());
+
+    setLlmKey("");
+    setHasLlm(true);
+
     setSavedLlm(true);
 
     setTimeout(() => {
@@ -54,35 +63,44 @@ export default function Config() {
   };
 
   return (
-    <div className="min-h-screen pt-12 pb-24">
-      <div className="max-w-2xl mx-auto px-5">
+    <div className="min-h-screen bg-slate-950 text-white px-6 py-10">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 rounded-xl bg-slate-800 border border-slate-700">
+              <Code size={24} className="text-cyan-400" />
+            </div>
 
-        {/* ---------- Page Header ---------- */}
-        <div className="mb-8 text-center">
-          <span className="text-sm font-medium text-indigo-300">
-            Configuration
-          </span>
+            <h1 className="text-3xl font-bold">
+              Configuration
+            </h1>
+          </div>
 
-          <h1 className="text-3xl md:text-5xl font-bold mt-2 tracking-tight text-white">
-            Connect your developer tools.
-          </h1>
-
-          <p className="text-base text-slate-300 mt-4 max-w-xl mx-auto leading-7">
-            Configure your credentials to enable AI analysis and GitHub access.
+          <p className="text-slate-400">
+            Configure your GitHub and Groq credentials for ContribPilot.
           </p>
         </div>
 
-        {/* ---------- GitHub Token Card ---------- */}
-        <div className={cardClass}>
-          <div className="flex items-center gap-2.5 mb-6">
-            <Code className="w-5 h-5 text-indigo-300" />
+        {/* GitHub Configuration */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-slate-800">
+              <Code size={20} className="text-cyan-400" />
+            </div>
 
-            <h2 className="text-base font-semibold text-white">
-              GitHub Configuration
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold">
+                GitHub Configuration
+              </h2>
+
+              <p className="text-sm text-slate-500">
+                Configure GitHub access for repository and issue data.
+              </p>
+            </div>
           </div>
 
-          <label className={labelClass}>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
             Personal Access Token
           </label>
 
@@ -90,151 +108,177 @@ export default function Config() {
             <input
               type={showGithub ? "text" : "password"}
               value={githubToken}
-              onChange={(e) =>
-                setGithubToken(e.target.value)
+              onChange={(e) => setGithubToken(e.target.value)}
+              placeholder={
+                hasGithub
+                  ? "Token already saved — enter new token to replace"
+                  : "github_pat_..."
               }
-              placeholder="github_pat_••••••••••••••••"
-              autoComplete="off"
-              spellCheck={false}
-              className={inputClass}
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 pr-12 text-white placeholder:text-slate-600 outline-none focus:border-cyan-500 transition"
             />
 
             <button
               type="button"
-              onClick={() =>
-                setShowGithub((v) => !v)
-              }
+              onClick={() => setShowGithub((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
               aria-label={
                 showGithub
                   ? "Hide GitHub token"
                   : "Show GitHub token"
               }
-              className={eyeBtnClass}
             >
               {showGithub ? (
-                <EyeOff className="w-4 h-4" />
+                <EyeOff size={20} />
               ) : (
-                <Eye className="w-4 h-4" />
+                <Eye size={20} />
               )}
             </button>
           </div>
 
           <p className="text-sm text-slate-400 mt-3 leading-6">
-            Required for accessing GitHub repositories and issues.
-          </p>
+            Optional. Without a token, GitHub rate limits hit quickly and
+            private repos won't work.
 
-          <div className="mt-6 flex items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={handleSaveGithub}
-              className={saveBtnClass}
-            >
-              Save Token
-            </button>
-
-            {savedGithub && (
-              <span className="flex items-center gap-1.5 text-sm text-green-400">
-                <CheckCircle2 className="w-4 h-4" />
-                Token saved
+            {hasGithub && (
+              <span className="text-green-400">
+                {" "}
+                · Already saved
               </span>
             )}
-          </div>
+          </p>
+
+          <button
+            type="button"
+            onClick={handleSaveGithub}
+            disabled={!githubToken.trim()}
+            className="mt-5 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-semibold transition flex items-center gap-2"
+          >
+            {savedGithub ? (
+              <>
+                <CheckCircle2 size={18} />
+                Saved
+              </>
+            ) : (
+              "Save GitHub Token"
+            )}
+          </button>
         </div>
 
-        {/* ---------- LLM API Key Card ---------- */}
-        <div className={`mt-6 ${cardClass}`}>
-          <div className="flex items-center gap-2.5 mb-6">
-            <Sparkles className="w-5 h-5 text-indigo-300" />
+        {/* Groq Configuration */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-slate-800">
+              <Sparkles size={20} className="text-purple-400" />
+            </div>
 
-            <h2 className="text-base font-semibold text-white">
-              AI Configuration
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold">
+                AI Configuration
+              </h2>
+
+              <p className="text-sm text-slate-500">
+                Configure Groq for AI-powered contribution assistance.
+              </p>
+            </div>
           </div>
 
-          <label className={labelClass}>
-            LLM API Key
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Groq API Key
           </label>
 
           <div className="relative">
             <input
               type={showLlm ? "text" : "password"}
               value={llmKey}
-              onChange={(e) =>
-                setLlmKey(e.target.value)
+              onChange={(e) => setLlmKey(e.target.value)}
+              placeholder={
+                hasLlm
+                  ? "API key already saved — enter new key to replace"
+                  : "gsk_..."
               }
-              placeholder="gsk_••••••••••••••••••••••••"
-              autoComplete="off"
-              spellCheck={false}
-              className={inputClass}
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 pr-12 text-white placeholder:text-slate-600 outline-none focus:border-purple-500 transition"
             />
 
             <button
               type="button"
-              onClick={() =>
-                setShowLlm((v) => !v)
-              }
+              onClick={() => setShowLlm((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
               aria-label={
                 showLlm
-                  ? "Hide LLM API key"
-                  : "Show LLM API key"
+                  ? "Hide Groq API key"
+                  : "Show Groq API key"
               }
-              className={eyeBtnClass}
             >
               {showLlm ? (
-                <EyeOff className="w-4 h-4" />
+                <EyeOff size={20} />
               ) : (
-                <Eye className="w-4 h-4" />
+                <Eye size={20} />
               )}
             </button>
           </div>
 
           <p className="text-sm text-slate-400 mt-3 leading-6">
-            Used for AI-powered issue analysis, breakdowns, and hints.
-          </p>
+            Required for AI-powered issue analysis, breakdowns, and hints.
 
-          <div className="mt-6 flex items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={handleSaveLlm}
-              className={saveBtnClass}
-            >
-              Save Key
-            </button>
-
-            {savedLlm && (
-              <span className="flex items-center gap-1.5 text-sm text-green-400">
-                <CheckCircle2 className="w-4 h-4" />
-                Key saved
+            {hasLlm && (
+              <span className="text-green-400">
+                {" "}
+                · Already saved
               </span>
             )}
+          </p>
+
+          <button
+            type="button"
+            onClick={handleSaveLlm}
+            disabled={!llmKey.trim()}
+            className="mt-5 px-5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold transition flex items-center gap-2"
+          >
+            {savedLlm ? (
+              <>
+                <CheckCircle2 size={18} />
+                Saved
+              </>
+            ) : (
+              "Save Groq API Key"
+            )}
+          </button>
+        </div>
+
+        {/* Status */}
+        <div className="mt-6 p-4 rounded-xl border border-slate-800 bg-slate-900/50">
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-2.5 h-2.5 rounded-full ${
+                hasLlm
+                  ? "bg-green-400"
+                  : "bg-red-400"
+              }`}
+            />
+
+            <span className="text-sm text-slate-300">
+              {hasLlm
+                ? "Groq API key configured. You can use AI features."
+                : "Groq API key is required before using AI features."}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 mt-3">
+            <div
+              className={`w-2.5 h-2.5 rounded-full ${
+                hasGithub
+                  ? "bg-green-400"
+                  : "bg-yellow-400"
+              }`}
+            />
+
+            <span className="text-sm text-slate-300">
+              {hasGithub
+                ? "GitHub token configured."
+                : "GitHub token not configured. Public repositories can still be used with rate limits."}
+            </span>
           </div>
         </div>
-
-        {/* ---------- Security Notice ---------- */}
-        <div className={`mt-6 ${cardClass}`}>
-          <h2 className="text-base font-semibold text-white mb-4">
-            🔒 Credential Security
-          </h2>
-
-          <ul className="text-sm text-slate-300 space-y-2 leading-6 list-disc pl-5 marker:text-slate-500">
-            <li>
-              Never share your API keys or tokens publicly.
-            </li>
-
-            <li>
-              Never commit credentials to a repository.
-            </li>
-
-            <li>
-              Use tokens with the minimum required permissions.
-            </li>
-
-            <li>
-              ContribPilot does not display saved credentials.
-            </li>
-          </ul>
-        </div>
-
       </div>
     </div>
   );

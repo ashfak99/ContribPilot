@@ -1,16 +1,24 @@
 const CRITERIA_KEY = "cp_match_criteria";
 const ACTIVE_ISSUE_KEY = "active_issue_id";
+
 const hintKey = (issueId) => `cp_hint_${issueId}`;
 
-// ---------- Match criteria (skills/experience/repo) ----------
+// ============================================================
+// Match criteria
+// ============================================================
+
 export function saveMatchCriteria({ skills, experience, repo }) {
   try {
     localStorage.setItem(
       CRITERIA_KEY,
-      JSON.stringify({ skills, experience, repo })
+      JSON.stringify({
+        skills,
+        experience,
+        repo,
+      })
     );
   } catch {
-    /* ignore storage errors */
+    // ignore storage errors
   }
 }
 
@@ -23,11 +31,16 @@ export function getMatchCriteria() {
   }
 }
 
-// ---------- Active issue (last viewed) ----------
+// ============================================================
+// Active issue
+// ============================================================
+
 export function setActiveIssueId(id) {
   try {
     localStorage.setItem(ACTIVE_ISSUE_KEY, String(id));
-  } catch {}
+  } catch {
+    // ignore storage errors
+  }
 }
 
 export function getActiveIssueId() {
@@ -38,7 +51,10 @@ export function getActiveIssueId() {
   }
 }
 
-// ---------- Hint unlock progress ----------
+// ============================================================
+// Hint unlock progress
+// ============================================================
+
 export function getUnlockedHint(issueId) {
   try {
     return Number(localStorage.getItem(hintKey(issueId)) || 0);
@@ -50,5 +66,62 @@ export function getUnlockedHint(issueId) {
 export function setUnlockedHint(issueId, level) {
   try {
     localStorage.setItem(hintKey(issueId), String(level));
-  } catch {}
+  } catch {
+    // ignore storage errors
+  }
+}
+
+// ============================================================
+// Credentials
+// ============================================================
+
+const GH_TOKEN_KEY = "gh_token";
+const LLM_KEY = "llm_key";
+
+// ---------- GitHub Token ----------
+
+export function saveGithubToken(token) {
+  try {
+    sessionStorage.setItem(GH_TOKEN_KEY, token);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+export function getGithubToken() {
+  try {
+    return sessionStorage.getItem(GH_TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+// ---------- Groq API Key ----------
+
+export function saveLlmKey(key) {
+  try {
+    sessionStorage.setItem(LLM_KEY, key);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+export function getLlmKey() {
+  try {
+    return sessionStorage.getItem(LLM_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+// ============================================================
+// Credential checks
+// ============================================================
+
+export function hasRequiredCredentials() {
+  return Boolean(getLlmKey());
+}
+
+export function hasGithubToken() {
+  return Boolean(getGithubToken());
 }
